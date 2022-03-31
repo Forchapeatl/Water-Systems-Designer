@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <html>
 <head>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-  <title>save</title>
+  <title>Water Systems Desginer</title>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <meta name="robots" content="noindex, nofollow">
   <meta name="googlebot" content="noindex, nofollow">
@@ -12,7 +11,7 @@
 
   <script
     type="text/javascript"
-    src="/js/lib/dummy.js"
+    src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.1/angular.js"
     
   ></script>
 
@@ -20,15 +19,12 @@
 
 
   <style id="compiled-css" type="text/css">
-      html,
-body,
-#map {
-  height: 100%;
-  width: 100%;
-  margin: 0px;
-  padding: 0px
+      #map {
+    height:420px;
+    width:100vw;
+    
 }
-.hover_img a { position:relative; }
+hover_img a { position:relative; }
 .hover_img a span { position:absolute; display:none; z-index:99; }
 .hover_img a:hover span { display:block; }
 .card {
@@ -56,27 +52,109 @@ img {
   <script id="insert"></script>
 
 
+    <script src="/js/stringify.js?1de1b4f966a5c96afa94e8560c714e6cae481049" charset="utf-8"></script>
+    <script>
+      const customConsole = (w) => {
+        const pushToConsole = (payload, type) => {
+          w.parent.postMessage({
+            console: {
+              payload: stringify(payload),
+              type:    type
+            }
+          }, "*")
+        }
+
+        w.onerror = (message, url, line, column) => {
+          // the line needs to correspond with the editor panel
+          // unfortunately this number needs to be altered every time this view is changed
+          line = line - 70
+          if (line < 0){
+            pushToConsole(message, "error")
+          } else {
+            pushToConsole(`[${line}:${column}] ${message}`, "error")
+          }
+        }
+
+        let console = (function(systemConsole){
+          return {
+            log: function(){
+              let args = Array.from(arguments)
+              pushToConsole(args, "log")
+              systemConsole.log.apply(this, args)
+            },
+            info: function(){
+              let args = Array.from(arguments)
+              pushToConsole(args, "info")
+              systemConsole.info.apply(this, args)
+            },
+            warn: function(){
+              let args = Array.from(arguments)
+              pushToConsole(args, "warn")
+              systemConsole.warn.apply(this, args)
+            },
+            error: function(){
+              let args = Array.from(arguments)
+              pushToConsole(args, "error")
+              systemConsole.error.apply(this, args)
+            },
+            system: function(arg){
+              pushToConsole(arg, "system")
+            },
+            clear: function(){
+              systemConsole.clear.apply(this, {})
+            },
+            time: function(){
+              let args = Array.from(arguments)
+              systemConsole.time.apply(this, args)
+            },
+            assert: function(assertion, label){
+              if (!assertion){
+                pushToConsole(label, "log")
+              }
+
+              let args = Array.from(arguments)
+              systemConsole.assert.apply(this, args)
+            }
+          }
+        }(window.console))
+
+        window.console = { ...window.console, ...console }
+
+        console.system("Running fiddle")
+      }
+
+      if (window.parent){
+        customConsole(window)
+      }
+    </script>
 </head>
-<body>
+<body ng-app="myApp">
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCkUOdZ5y7hMm0yrcCQoCvLwzdM6M8s5qk&libraries=geometry,places&ext=.js"></script>
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <input style="height:30px;" id="searchTextField"  type="text" size="50" placeholder="Enter a location" autocomplete="on" runat="server" />
-    <button onclick="TO();TO();updateChart();">search </button>
-<div style="display:none" id="delay"></div>
-<div id="map"></div>
-<div id="piechart"></div>
-<div id="mapop"></div>
-<div id="myDynamicTable"></div>
-<div id="messages"></div>
-<div id="status"></div>
-
+<div my-map=""></div>
 
     <script type="text/javascript">//<![CDATA[
 
 
+angular.module('myApp', []).
+directive('myMap', function() {
+    // directive link function
+    var link = function(scope, element, attrs) {
+
 var infowindow;
-var intlng = 4.1574871,intlat = 9.2299662;
-var endlng = 4.153359, endlat= 9.2588443;
+var intlng ,intlat;
+var endlng ,endlat;
+
+if(localStorage.getItem('firstlng')==''){
+ intlng = 4.1574871,intlat = 9.2299662;
+ endlng = 4.153359, endlat= 9.2588443;
+}else{
+ intlng = localStorage.getItem('firstlng');
+ intlat = localStorage.getItem('firstlat');
+ endlng = intlng+0.13;
+ endlat = endlat+0.09;
+}
+
 var  start1 = intlng+","+intlat;
 var end= endlng+","+endlat;
 var addresses = [
@@ -91,7 +169,10 @@ var directionsDisplay;
 var directionsService = new google.maps.DirectionsService();
 var map;
 var bounds;
+var banana= [{name:'',price:''}];
+var disCart = []
 
+ 
 
  function TakP(){
  var input = document.getElementById('searchTextField');var autocomplete = new google.maps.places.Autocomplete(input);
@@ -99,32 +180,18 @@ var bounds;
         var place = autocomplete.getPlace();
 place.name;
  intlng=place.geometry.location.lat();
- intlat=place.geometry.location.lng();
- endlat=0.13+intlat;
- endlng=0.15+intlng;alert(endlng);
- //addresses.splice(i, 0);
- start1 = intlng+","+intlat;
-
- console.log(addresses);
-
-  addresses.length = 0;
- river.length = 0
-riverAround.length = 0
-rivAL.length = 0
-pop.length = 0
- addresses.push([intlng+","+intlat , endlng+","+endlat]);
-
-console.log(addresses);
- 
-
- //alert(intlat+intlng);
+ intlat=place.geometry.location.lng(); 
+ //alert(intlat)
+ localStorage.setItem('firstlng',intlng);
+ localStorage.setItem('firstlat',intlat);
+ //alert("localS "+localStorage.getItem('firstlng'))
+//alert("isworking");
             });
             }
 
 
 function initialize() {
 TakP();
-
   directionsDisplay = new google.maps.DirectionsRenderer();
   //51.5078788,-0.08773210000000001
   console.log("Where we"+intlng +","+ intlat)
@@ -224,9 +291,10 @@ var nextAddress = 0;
 function theNext() {
   if (nextAddress < addresses.length) {
     console.log('call calcRoute("' + addresses[nextAddress][0] + '","' + addresses[nextAddress][1] + ') delay=' + delay);
-    setTimeout('calcRoute("' + addresses[nextAddress][0] + '","' + addresses[nextAddress][1] + '",theNext)', delay);
+    setTimeout(calcRoute(addresses[nextAddress][0], addresses[nextAddress][1],theNext), delay);
     nextAddress++;
   } else {
+  
     // We're done. Show map bounds
     map.fitBounds(bounds);
   }
@@ -264,7 +332,7 @@ function googlePlaces(point) {
       p=p+'<div style="float:left" class="hover_img"><a href="#">'+results[i].name+ "  ,  "+'<span class="card"><img src='+rp+' alt="image" height="100px" /><div class="container"></div></span></a></div>'
          console.log(results[pk].photos[0].getUrl({ 'maxWidth': 35, 'maxHeight': 35 }));
      }
-     console.log(p)
+     //alert(p)
      console.log(results[5]);
     // console.log(results[pk].name);
 
@@ -319,8 +387,7 @@ para.innerHTML = '<h5>'+object[field]+'</h5>';
   return tbl;
 }
 
-var banana= [{name:'',price:''}];
-var disCart = []
+
 function AssignRiver(p,i){
 var n,oj,u;
 ug=river[i].name
@@ -367,23 +434,39 @@ disCart
   chart.draw(data, options);
 }
 
-function intBtn(){
-banana.length = 0
-disCart.length = 0
+ function intBtn(){
+   var container = document.getElementById("myDynamicTable");
+   var content = container.innerHTML;
+   container.innerHTML= content;
 nextAddress = 0;
-
 initialize();theNext();
+alert("banana array"+banana)
 
 }
-function TO(){
-for(i=1; i<10; i++){
-setTimeout(intBtn(),i*100);
+scope.TO = function(){
+/*intBtn();
+updateChart();*/
+TakP()
+location.reload();
 }
-}
+
 function updateChart(){
 google.charts.load('current', {'packages':['corechart']});
 google.charts.setOnLoadCallback(drawChart);
 }
+    };
+
+
+    
+    return {
+        restrict: 'A',
+        template: '<div><input style="height:30px;" id="searchTextField"  type="text" size="50" placeholder="Enter a location" autocomplete="on" runat="server" /><button  ng-click="TO();">search </button><div style="display:none" id="delay"></div><div id="map"></div><div id="piechart"></div><div id="mapop"></div><div id="myDynamicTable"></div><div id="messages"></div><div id="status"></div></div>',
+        replace: true,
+        link: link
+    };
+});
+
+
 
 
   //]]></script>
@@ -393,7 +476,7 @@ google.charts.setOnLoadCallback(drawChart);
     if (window.parent && window.parent.parent){
       window.parent.parent.postMessage(["resultsFrame", {
         height: document.body.getBoundingClientRect().height,
-        slug: "wmqeo21z"
+        slug: "b31am2sx"
       }], "*")
     }
 
@@ -401,6 +484,22 @@ google.charts.setOnLoadCallback(drawChart);
     window.name = "result"
   </script>
 
+    <script>
+      let allLines = []
+
+      window.addEventListener("message", (message) => {
+        if (message.data.console){
+          let insert = document.querySelector("#insert")
+          allLines.push(message.data.console.payload)
+          insert.innerHTML = allLines.join(";\r")
+
+          let result = eval.call(null, message.data.console.payload)
+          if (result !== undefined){
+            console.log(result)
+          }
+        }
+      })
+    </script>
 
 </body>
 </html>
